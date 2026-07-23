@@ -1,0 +1,194 @@
+> Pastor:
+CONTEXTO E REGRAS DE OPERAÇÃO — LEIA TUDO ANTES DE AGIR
+
+Você vai me ajudar a reconstruir um aplicativo chamado Viva+ do zero.
+Esta primeira mensagem NÃO é um pedido de código. É o contrato de trabalho.
+
+Sua ÚNICA tarefa nesta mensagem é ler, confirmar e aguardar.
+NÃO crie arquivos. NÃO instale pacotes. NÃO escreva código.
+NÃO proponha melhorias. NÃO se antecipe.
+
+
+═══════════════════════════════════════════════
+1. POR QUE ESTE PROJETO ESTÁ SENDO REFEITO
+═══════════════════════════════════════════════
+
+A versão anterior falhou de quatro formas. Você precisa conhecê-las
+porque são exatamente os erros que um agente de IA tende a repetir.
+
+FALHA 1 — Duas stacks incompatíveis no mesmo repositório
+  Havia React na raiz e Flutter em apps/mobile/. Nenhum agente decidiu
+  isso; foi acontecendo. Nenhum dos dois funcionava.
+
+FALHA 2 — Simulação apresentada como implementação  ← A MAIS GRAVE
+  A tela exibia "Status Supabase: Conectado (Ativo)" como texto fixo em
+  HTML. As feature flags vinham de um array escrito à mão no código.
+  O botão "Testar endpoint" chamava setTimeout(400ms) e devolvia um
+  objeto inventado. Não existia UMA linha de @supabase/supabase-js
+  no projeto inteiro. O app PARECIA pronto e não fazia absolutamente nada.
+
+FALHA 3 — Quebra silenciosa
+  Um controller era instanciado sem sua dependência obrigatória, caía
+  num bloco else e reportava "status: ready". A cadeia de código real
+  existia, compilava, passava nos testes, e nunca era chamada.
+
+FALHA 4 — Perda de contexto entre sessões
+  Quem escreveu o SQL não era quem escreveu o cliente. Faltava uma
+  extensão do banco, e ninguém percebeu até 16 testes falharem juntos.
+
+Total auditado: 72 defeitos. Todos os 72 vieram de falta de regra,
+não de falta de habilidade técnica.
+
+
+═══════════════════════════════════════════════
+2. DECISÕES JÁ TOMADAS — NÃO SÃO NEGOCIÁVEIS
+═══════════════════════════════════════════════
+
+STACK
+  React + TypeScript + Vite
+  Tailwind CSS v4 (via plugin @tailwindcss/vite)
+  react-router-dom, zod, lucide-react
+  Supabase como ÚNICO backend
+  Testes: vitest + @testing-library
+  Gerenciador: npm (jamais bun, yarn ou pnpm)
+
+PROIBIDO NO PROJETO
+  flutter, dart, express, next, @google/genai, docker,
+  bun.lock, yarn.lock, pnpm-lock.yaml,
+  qualquer backend próprio (o Supabase É o backend)
+
+O QUE O VIVA+ É
+  Aplicação web/PWA, single-tenant por usuário, backend Supabase.
+  Idioma pt-BR. Fuso America/Bahia.
+  Trata dados sensíveis de saúde (LGPD art. 11).
+
+O QUE O VIVA+ NÃO É
+  Não é app Flutter nativo.
+  Não é multi-tenant.
+  Não tem backend próprio.
+  Não usa Docker (o Replit não oferece Docker).
+  Não tem IA antes do Módulo 12.
+
+
+═══════════════════════════════════════════════
+3. AS DEZ REGRAS INVIOLÁVEIS
+═══════════════════════════════════════════════
+
+R-01  NUNCA exiba dado inventado como se viesse do banco.
+      Sem conexão real, mostre o estado de erro real.
+      Mock existe apenas dentro de src/tests/.
+
+R-02  NUNCA converta falha em sucesso.
+      Proibido: catch vazio; catch que retorna estado "ok";
+      valor default que mascara ausência de dado; dependência
+      opcional que finge funcionar quando é nula.
+
+R-03  NUNCA use allowedHosts: true no Vite.
+      Expõe o dev server a DNS rebinding. Se o Replit bloquear,
+      eu forneço o hostname exato e você adiciona SÓ aquele.
+
+R-04  NUNCA crie policy RLS para service_role.
+      service_role ignora RLS por definição; a policy nunca executa.
+      Para acesso server-only, use apenas GRANT.
+
+R-05  NUNCA crie uma tabela public.schema_migrations.
+      O Supabase já mantém supabase_migrations.schema_migrations.
+      Duplicar isso quebra o db push.
+
+R-06  NUNCA use \i dentro de arquivo .sql.
+      \i é metacomando do cliente psql, não é SQL.
+      Todo SQL necessário fica dentro da própria migration.
+
+R-07  NUNCA altere schema pelo SQL Editor do Supabase.
+      Schema muda por arquivo em supabase/migrations/ + db push.
+      O SQL Editor serve apenas para LER e conferir.
+
+R-08  NUNCA edite uma migration já aplicada.
+      Mudança de schema = migration NOVA, aditiva.
+
+> Pastor:
+R-09  NUNCA fixe versões de pacote à mão no package.json.
+      Deixe o npm resolver e o package-lock.json congelar.
+
+R-10  NUNCA escreva secret em arquivo.
+      Chaves vão na aba Secrets do Replit. O .env.example contém
+      apenas placeholders. A chave sbp_ é token de ADMIN e nunca,
+      em hipótese alguma, entra no repositório.
+
+
+═══════════════════════════════════════════════
+4. COMO VAMOS TRABALHAR
+═══════════════════════════════════════════════
+
+O projeto tem 14 módulos, do 0 ao 13. Eles serão executados
+UM DE CADA VEZ, na ordem, com prova ao final de cada um.
+
+  Módulo 0  — Contrato e repositório (documentos + guards)
+  Módulo 1  — Esqueleto React
+  Módulo 2  — Fundação Supabase (3 tabelas, RLS, seed)
+  Módulo 3  — Conexão real          ← PORTÃO CRÍTICO
+  Módulo 4  — Autenticação e perfis
+  Módulo 5  — Hábitos
+  Módulo 6  — Jornadas
+  Módulo 7  — Desafios
+  Módulo 8  — Comunidade
+  Módulo 9  — Administração
+  Módulo 10 — Loja
+  Módulo 11 — Pagamentos
+  Módulo 12 — IA Viva+
+  Módulo 13 — PWA e publicação mobile
+
+O MÓDULO 3 É UM PORTÃO. Sua prova é: eu altero uma feature flag
+direto no banco, recarrego o app sem tocar em código e sem
+republicar, e a tela MUDA. Se não mudar, você reconstruiu o
+simulador da Falha 2 e paramos tudo.
+
+Nenhum módulo de negócio (4 em diante) começa antes do 3 passar.
+
+PROTOCOLO DE CADA MÓDULO
+  1. Eu envio o módulo com os comandos.
+  2. Você executa APENAS o que foi enviado.
+  3. Você roda a verificação.
+  4. Você me mostra a SAÍDA REAL dos comandos.
+  5. Eu aprovo.
+  6. Só então vamos para o próximo.
+
+
+═══════════════════════════════════════════════
+5. O QUE VOCÊ NÃO PODE FAZER SEM ME PERGUNTAR
+═══════════════════════════════════════════════
+
+✗ Criar arquivo que eu não pedi
+✗ Instalar pacote que eu não listei
+✗ "Melhorar" ou "otimizar" algo por conta própria
+✗ Pular etapa porque pareceu óbvia
+✗ Adiantar módulos futuros
+✗ Trocar uma decisão desta lista porque conhece "um jeito melhor"
+✗ Silenciar erro para o comando passar
+✗ Ajustar o verificador quando ele acusar problema
+    (o verificador está certo; o código é que precisa mudar)
+
+✗ E O MAIS IMPORTANTE:
+  Nunca me mostre saída de comando que você não executou.
+  Se não rodou, diga que não rodou.
+  Se falhou, cole o erro inteiro, sem resumir e sem embelezar.
+  Um erro real vale mais que um relatório bonito.
+
+Se algo que eu pedir parecer errado ou contradizer estas regras:
+PARE e me pergunte. Não improvise. Não "interprete a intenção".
+
+
+═══════════════════════════════════════════════
+6. SUA RESPOSTA A ESTA MENSAGEM
+═══════════════════════════════════════════════
+
+Responda APENAS com o seguinte, e nada além disso:
+
+  a) Confirmação de que leu e aceita as 10 regras.
+  b) A stack em uma linha, com suas palavras.
+  c) Qual é a Falha 2 e por que ela é a mais grave.
+  d) O que acontece se o Módulo 3 não passar na prova.
+  e) O que você faz quando um comando falha.
+
+NÃO crie nada. NÃO instale nada. NÃO sugira nada.
+Depois da sua resposta, eu envio o Módulo 0.
