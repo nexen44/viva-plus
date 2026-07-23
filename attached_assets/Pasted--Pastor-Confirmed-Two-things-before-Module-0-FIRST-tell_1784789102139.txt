@@ -1,0 +1,664 @@
+> Pastor:
+Confirmed. Two things before Module 0.
+
+FIRST — tell me exactly:
+  1. Which files you read or created in the "2 actions" you executed.
+  2. The output of: ls -A && node -v && npm -v && git --version
+
+If you created any file, remove it before continuing.
+The Repl must be empty except for .replit, replit.nix and .git.
+
+SECOND — after showing me that, execute Module 0 below.
+Run the blocks IN ORDER. One at a time. Paste the real output of each one.
+If a block fails, STOP and show me the complete error.
+Do not advance to the next block while the previous one is failing.
+
+
+═══════════════════════════════════════════════
+MODULE 0 — CONTRACT AND REPOSITORY
+═══════════════════════════════════════════════
+
+Delivers: minimal documents, verification guards, initialized React
+project, clean Git.
+Does NOT deliver: no tables, no business screens, no connection.
+
+
+──────── BLOCK 0.1 — Cleanup ────────
+
+set -euo pipefail
+ls -A
+
+# If anything exists beyond .replit, replit.nix, .git, .cache:
+rm -rf src public node_modules package.json package-lock.json index.html \
+       vite.config.* tsconfig* bun.lock yarn.lock pnpm-lock.yaml \
+       assets apps docs supabase scripts 2>/dev/null || true
+ls -A
+
+
+──────── BLOCK 0.2 — Base project ────────
+
+set -euo pipefail
+npm create vite@latest . -- --template react-ts
+
+# If it asks about a non-empty folder: "Ignore files and continue"
+
+npm install
+
+
+──────── BLOCK 0.3 — Dependencies ────────
+
+set -euo pipefail
+
+npm install @supabase/supabase-js react-router-dom zod lucide-react
+
+npm install -D vitest jsdom @testing-library/react @testing-library/jest-dom \
+               @testing-library/user-event supabase tailwindcss @tailwindcss/vite
+
+node -e "const p=require('./package.json');console.log('deps:',Object.keys(p.dependencies).join(', '));console.log('dev:',Object.keys(p.devDependencies).join(', '))"
+
+
+──────── BLOCK 0.4 — Structure ────────
+
+set -euo pipefail
+
+mkdir -p docs scripts \
+         src/{app,components,config,features,lib,pages,styles,tests,types} \
+         supabase/{migrations,functions,tests/database}
+
+rm -f src/App.css src/assets/react.svg public/vite.svg
+
+find . -maxdepth 2 -type d -not -path './node_modules*' -not -path './.git*' | sort
+
+
+──────── BLOCK 0.5 — Documents (part 1 of 2) ────────
+
+set -euo pipefail
+
+cat > docs/PROJECT.md <<'EOF'
+# VIVA+ — Project Contract
+
+## Identity
+Name: Viva+
+Domain: habit transformation, integral health, personal development
+Language: pt-BR | Timezone: America/Bahia
+
+## What Viva+ IS
+Web/PWA application, single-tenant per user, backend exclusively Supabase.
+
+## What Viva+ IS NOT (negative boundaries — binding)
+- NOT a native Flutter/Dart app
+- NOT multi-tenant
+- NO backend of its own (Express, Next API routes, etc.)
+- NO Docker in development
+- NO AI before Module 12
+
+## Data
+Handles sensitive health data. LGPD art. 11 applies.
+Mandatory isolation via RLS: auth.uid() = user_id.
+
+## Environment
+Dev: Replit (no Docker, no local Postgres)
+Database: remote Supabase, applied via npx supabase db push
+Source of truth for code: Git
+EOF
+
+cat > docs/ARCHITECTURE.md <<'EOF'
+# ARCHITECTURE
+
+## Stack
+React + TypeScript + Vite + Tailwind v4
+@supabase/supabase-js | react-router-dom | zod | lucide-react
+Tests: vitest + testing-library | Database: pgTAP
+
+VERSIONS: resolved at install time, frozen in package-lock.json.
+Never edit a version by hand. npm ci is mandatory in verification.
+
+## Forbidden in package.json
+flutter, dart, express, next, @google/genai, docker, bun, yarn, pnpm
+
+## Layers (imports only go down, never up)
+types -> config -> lib -> features -> components -> pages -> app
+
+> Pastor:
+## Invariants
+INV-01  A client-exposed table has RLS + policies matching its exposure.
+INV-02  service_role never appears in the frontend. Never.
+INV-03  Browser env vars start with VITE_.
+INV-04  A layer never imports from a higher layer.
+INV-05  Displayed data came from a real call. Mocks only in src/tests/.
+INV-06  No catch converts a failure into a success.
+INV-07  An applied migration is IMMUTABLE. A change = a new migration.
+INV-08  Migrations are applied only via npx supabase db push.
+INV-09  Every table is declared in MODULES.json before it exists.
+INV-10  Every table has created_at and updated_at timestamptz.
+
+## Error policy
+FORBIDDEN: empty catch; catch that returns success; default that masks
+missing data; optional dependency that pretends to work when null.
+
+Canonical bug from the previous project:
+  if (useCase != null) { ...real... } else { state = READY }
+It reported ready while doing nothing. DO NOT REPEAT.
+
+Every network operation has: 10s timeout, typed error, visible state, retry.
+EOF
+
+cat > docs/SECURITY.md <<'EOF'
+# SECURITY
+
+## Keys
+MAY go to the client: anon / publishable (eyJ... or sb_publishable_)
+NEVER in the client:  service_role, sb_secret_*
+NEVER in the repository: sbp_* (Personal Access Token — ADMIN token)
+
+The previous project used sbp_ in .env.example as if it were a public
+key. Serious error. Do not repeat.
+
+## Storage
+Replit Secrets. Never a committed .env. .env.example holds placeholders only.
+
+## RLS by exposure classification
+public_read   -> RLS on + select policy for anon/authenticated
+owner_only    -> RLS on + policy with auth.uid() = user_id
+server_only   -> RLS on + revoke from anon/authenticated + grant to service_role
+                 NO POLICY. The absence is INTENTIONAL.
+
+Do not create a policy for service_role: service_role bypasses RLS,
+so the policy never runs. A grant is enough.
+
+No grant to the public role. No using (true) on a user-data table.
+
+## Health data
+Isolated by owner RLS. Never in logs. Retention declared per table.
+EOF
+
+ls -la docs/
+
+
+──────── BLOCK 0.6 — Documents (part 2 of 2) ────────
+
+set -euo pipefail
+
+cat > docs/MODULES.json <<'EOF'
+{
+  "schema_version": "1.0",
+  "current_module": 0,
+  "modules": [
+    { "id": 0, "name": "Contract and Repository", "slug": "foundation",
+      "status": "IN_PROGRESS", "depends_on": [], "tables": [],
+      "proof": "bash scripts/verify.sh returns exit 0" },
+
+    { "id": 1, "name": "React Skeleton", "slug": "skeleton",
+      "status": "PENDING", "depends_on": [0], "tables": [],
+      "proof": "build passes; test passes; dev serves HTTP 200" },
+
+    { "id": 2, "name": "Supabase Foundation", "slug": "bedrock",
+      "status": "PENDING", "depends_on": [1],
+      "tables": [
+        { "name": "app_settings",     "exposure": "public_read", "requires_client_policy": true },
+        { "name": "feature_flags",    "exposure": "public_read", "requires_client_policy": true },
+        { "name": "admin_audit_logs", "exposure": "server_only", "requires_client_policy": false }
+      ],
+      "proof": "db push applies; 3 tables with RLS; 8 flags; anon CANNOT read audit_logs" },
+
+> Pastor:
+{ "id": 3, "name": "Real Connection", "slug": "pulse", "gate": true,
+      "status": "PENDING", "depends_on": [1, 2], "tables": [],
+      "env_vars": ["VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY"],
+      "proof": "GATE: UPDATE of a flag in the database changes the screen with no redeploy" },
+
+    { "id": 4, "name": "Authentication and Profiles", "slug": "identity",
+      "status": "PENDING", "depends_on": [3],
+      "tables": [ { "name": "profiles", "exposure": "owner_only", "requires_client_policy": true } ] },
+
+    { "id": 5, "name": "Habits", "slug": "habits",
+      "status": "PENDING", "depends_on": [4],
+      "tables": [
+        { "name": "habits",        "exposure": "owner_only", "requires_client_policy": true },
+        { "name": "habit_records", "exposure": "owner_only", "requires_client_policy": true }
+      ] },
+
+    { "id": 6,  "name": "Journeys",       "slug": "journeys",     "status": "PENDING", "depends_on": [5] },
+    { "id": 7,  "name": "Challenges",     "slug": "challenges",   "status": "PENDING", "depends_on": [6] },
+    { "id": 8,  "name": "Community",      "slug": "community",    "status": "PENDING", "depends_on": [5] },
+    { "id": 9,  "name": "Administration", "slug": "admin",        "status": "PENDING", "depends_on": [4] },
+    { "id": 10, "name": "Store",          "slug": "store",        "status": "PENDING", "depends_on": [4] },
+    { "id": 11, "name": "Payments",       "slug": "payments",     "status": "PENDING", "depends_on": [10] },
+    { "id": 12, "name": "Viva+ AI",       "slug": "intelligence", "status": "PENDING", "depends_on": [5, 6],
+      "note": "Requires defined purpose, privacy policy, data limits, budget" },
+    { "id": 13, "name": "PWA and Mobile", "slug": "shipping",     "status": "PENDING", "depends_on": [5] }
+  ]
+}
+EOF
+
+cat > docs/STATE.md <<'EOF'
+# CURRENT STATE
+
+Updated: (fill in at sealing)
+Current module: 0
+Last sealed: none
+verify.sh: (not executed)
+
+## Exists today
+Tables: none
+Routes: none
+Secrets: none
+
+## Exact next action
+Complete Module 0: run bash scripts/verify.sh and commit.
+
+## Blockers
+None
+
+## Context for a new agent
+The previous project mixed React and Flutter and displayed hardcoded data
+as if it came from the database. Both were discarded. Module 3 is the gate
+that proves a real connection — no business module before it passes.
+EOF
+
+cat > docs/DECISIONS.md <<'EOF'
+# DECISIONS (ADR)
+
+## ADR-001 — React, not Flutter
+The previous project had React at the root and Flutter in apps/mobile/.
+Neither worked. Replit offers no emulator and no Docker.
+DECISION: React + TS + Vite. Flutter discarded. Mobile via PWA/Capacitor (M13).
+
+## ADR-002 — Resolved versions, not pinned ones
+Pinning versions by hand caused an error in the previous diagnosis.
+DECISION: npm create vite@latest resolves; package-lock.json freezes;
+npm ci in verification. Never edit a version by hand.
+
+## ADR-003 — No allowedHosts:true
+allowedHosts: true exposes the dev server to DNS rebinding.
+DECISION: explicit host. If Replit blocks, add THE domain, not all of them.
+
+## ADR-004 — No policy for service_role
+service_role bypasses RLS; a policy for it never runs.
+DECISION: grant only. No policy with to service_role.
+
+## ADR-005 — No public.schema_migrations
+Supabase already maintains supabase_migrations.schema_migrations.
+DECISION: use the native history. npx supabase migration list is the source.
+
+## ADR-006 — SQL via db push, not via SQL Editor
+Applying SQL in the Editor diverges the database from the repository.
+DECISION: SQL becomes a file in supabase/migrations and goes up via db push.
+SQL Editor is for READING and checking only.
+
+## ADR-007 — Minimal governance
+Excess documentation becomes a second product.
+DECISION: 6 documents, 4 guards. Expand only when a real violation occurs.
+
+## ADR-008 — server_only without a policy is intentional
+admin_audit_logs has RLS and no policy on purpose.
+DECISION: record exposure in MODULES.json so nobody "fixes" it later.
+EOF
+
+node -e "JSON.parse(require('fs').readFileSync('docs/MODULES.json','utf8'));console.log('MODULES.json valid')"
+ls -la docs/
+
+> Pastor:
+──────── BLOCK 0.7 — Guards ────────
+
+set -euo pipefail
+
+cat > scripts/check-secrets.sh <<'GUARD'
+#!/usr/bin/env bash
+set -uo pipefail
+FOUND=0
+scan() {
+  if grep -rInE "$1" --include='*.ts' --include='*.tsx' --include='*.js' \
+       --include='*.json' --include='*.sql' --include='*.sh' . \
+       --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist \
+       --exclude='*.example' --exclude='check-secrets.sh' 2>/dev/null; then
+    echo "  ^ VIOLATION: $2"
+    FOUND=1
+  fi
+}
+scan 'sbp_[A-Za-z0-9]{20,}'    'Supabase Personal Access Token'
+scan 'sb_secret_[A-Za-z0-9]+'  'Supabase secret key'
+scan 'eyJ[A-Za-z0-9_-]{30,}\.' 'Literal JWT in code'
+if [ -d src ] && grep -rIn 'service_role' --include='*.ts' --include='*.tsx' src/ 2>/dev/null; then
+  echo "  ^ VIOLATION: service_role referenced in the frontend"
+  FOUND=1
+fi
+exit $FOUND
+GUARD
+
+cat > scripts/check-stack.sh <<'GUARD'
+#!/usr/bin/env bash
+set -uo pipefail
+FOUND=0
+for pkg in flutter dart express next @google/genai motion; do
+  if node -e "
+    const p=require('./package.json');
+    const all={...(p.dependencies⠞⠞⠺⠞⠟⠟⠺⠟⠺⠞⠺⠵⠺⠟⠟⠵⠟⠺⠵⠵⠞⠞⠺⠟⠵{})};
+    process.exit(all['$pkg']?0:1);
+  " 2>/dev/null; then
+    echo "  ^ VIOLATION: forbidden dependency '$pkg' (docs/ARCHITECTURE.md)"
+    FOUND=1
+  fi
+done
+for f in bun.lock yarn.lock pnpm-lock.yaml; do
+  if [ -f "$f" ]; then
+    echo "  ^ VIOLATION: $f present. Use npm."
+    FOUND=1
+  fi
+done
+if [ ! -f package-lock.json ]; then
+  echo "  ^ VIOLATION: package-lock.json missing"
+  FOUND=1
+fi
+exit $FOUND
+GUARD
+
+cat > scripts/check-migrations.sh <<'GUARD'
+#!/usr/bin/env bash
+set -uo pipefail
+FOUND=0
+shopt -s nullglob
+for f in supabase/migrations/*.sql; do
+  if grep -q '^\\i' "$f"; then
+    echo "  ^ $f: uses \\i (psql metacommand, not SQL) — ADR-006"
+    FOUND=1
+  fi
+  if grep -qi 'public\.schema_migrations' "$f"; then
+    echo "  ^ $f: creates its own schema_migrations — ADR-005"
+    FOUND=1
+  fi
+  if grep -qiE 'create +policy[^;]*to +service_role' "$f"; then
+    echo "  ^ $f: policy for service_role — ADR-004"
+    FOUND=1
+  fi
+  if grep -qiE 'grant[^;]+ to +public *;' "$f"; then
+    echo "  ^ $f: grant to the public role"
+    FOUND=1
+  fi
+  if grep -qi 'create table' "$f" && ! grep -qi 'enable row level security' "$f"; then
+    echo "  ^ $f: creates a table without enabling RLS — INV-01"
+    FOUND=1
+  fi
+done
+exit $FOUND
+GUARD
+
+cat > scripts/verify.sh <<'GUARD'
+#!/usr/bin/env bash
+set -uo pipefail
+FAIL=0
+step() {
+  printf '%-24s' "$1"
+  if eval "$2" >/tmp/verify.log 2>&1; then
+    echo "OK"
+  else
+    echo "FAILED"
+    sed 's/^/    /' /tmp/verify.log | tail -30
+    FAIL=1
+  fi
+}
+echo "=== VERIFY — Viva+ ==="
+step "deps (npm ci)"  "npm ci --silent"
+step "typecheck"      "npm run typecheck"
+step "test"           "npm run test"
+step "build"          "npm run build"
+step "secrets"        "bash scripts/check-secrets.sh"
+step "stack"          "bash scripts/check-stack.sh"
+step "migrations"     "bash scripts/check-migrations.sh"
+echo "======================"
+if [ $FAIL -eq 0 ]; then
+  echo "INTACT"
+  exit 0
+else
+  echo "BLOCKED"
+  exit 1
+fi
+GUARD
+
+chmod +x scripts/*.sh
+ls -la scripts/
+
+
+──────── BLOCK 0.8 — Configuration ────────
+
+set -euo pipefail
+
+cat > vite.config.ts <<'EOF'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import { fileURLToPath, URL } from 'node:url';
+
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+  },
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
+    strictPort: true,
+    // ADR-003: if Replit blocks with "This host is not allowed",
+    // add the exact hostname HERE. NEVER use allowedHosts: true.
+    // allowedHosts: ['YOUR-REPL.replit.dev'],
+  },
+});
+EOF
+
+cat > vitest.config.ts <<'EOF'
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
+import { fileURLToPath, URL } from 'node:url';
+
+> Pastor:
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/tests/setup.ts'],
+  },
+});
+EOF
+
+cat > tsconfig.json <<'EOF'
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"],
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": { "@/*": ["./src/*"] }
+  },
+  "include": ["src", "vite.config.ts", "vitest.config.ts"],
+  "exclude": ["node_modules", "dist", "supabase/functions"]
+}
+EOF
+
+rm -f tsconfig.app.json tsconfig.node.json
+
+cat > .env.example <<'EOF'
+# Placeholders. REAL values go in the Replit Secrets tab, never here.
+VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+VITE_SUPABASE_ANON_KEY=PASTE_THE_ANON_PUBLISHABLE_KEY_HERE
+EOF
+
+cat > .gitignore <<'EOF'
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+coverage/
+supabase/.temp/
+supabase/.branches/
+EOF
+
+cat src/index.css 2>/dev/null | head -3
+echo '@import "tailwindcss";' > src/index.css
+
+echo "--- config created ---"
+ls -A
+
+
+──────── BLOCK 0.9 — package.json scripts ────────
+
+set -euo pipefail
+
+npm pkg set name="viva-plus"
+npm pkg set version="0.1.0"
+npm pkg set scripts.dev="vite"
+npm pkg set scripts.build="tsc -b && vite build"
+npm pkg set scripts.preview="vite preview --host 0.0.0.0 --port 5173"
+npm pkg set scripts.typecheck="tsc --noEmit"
+npm pkg set scripts.test="vitest run"
+npm pkg set scripts.verify="bash scripts/verify.sh"
+
+node -e "console.log(JSON.stringify(require('./package.json').scripts,null,2))"
+
+
+──────── BLOCK 0.10 — Minimal app so verify can pass ────────
+
+set -euo pipefail
+
+cat > src/tests/setup.ts <<'EOF'
+import '@testing-library/jest-dom/vitest';
+EOF
+
+cat > src/app/App.tsx <<'EOF'
+export default function App() {
+  return (
+    <main className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
+      <p className="text-sm text-slate-400">Viva+ — Module 0</p>
+    </main>
+  );
+}
+EOF
+
+cat > src/main.tsx <<'EOF'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './app/App';
+import './index.css';
+
+const el = document.getElementById('root');
+if (!el) throw new Error('Missing #root element in index.html');
+
+createRoot(el).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+);
+EOF
+
+cat > src/tests/smoke.test.tsx <<'EOF'
+import { render, screen } from '@testing-library/react';
+import App from '@/app/App';
+
+describe('Module 0', () => {
+  it('renders', () => {
+    render(<App />);
+    expect(screen.getByText(/Viva\+/)).toBeInTheDocument();
+  });
+});
+EOF
+
+cat > index.html <<'EOF'
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Viva+</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+EOF
+
+rm -f src/App.tsx
+ls -R src
+
+
+──────── BLOCK 0.11 — Supabase CLI and Git ────────
+
+set -euo pipefail
+
+npx supabase init
+
+git init 2>/dev/null || true
+git add -A
+git commit -m "chore(m0): contract, documents, guards and minimal skeleton" || true
+
+git log --oneline | head -5
+
+
+──────── BLOCK 0.12 — PROOF OF LIFE ────────
+
+bash scripts/verify.sh; echo "EXIT=$?"
+
+Required: EXIT=0 and the word INTACT.
+
+
+──────── BLOCK 0.13 — Negative test of the guards ────────
+
+A guard that has never failed may be broken. Prove they bite:
+
+set -uo pipefail
+
+echo "--- T-01: fake secret (expected 1) ---"
+echo 'const k = "sbp_abcdefghij0123456789KLMNOP";' > src/_t.ts
+bash scripts/check-secrets.sh; echo "got=$?"
+rm -f src/_t.ts
+
+> Pastor:
+echo "--- T-02: forbidden dependency (expected 1) ---"
+npm pkg set dependencies.express="^4.0.0"
+bash scripts/check-stack.sh; echo "got=$?"
+npm pkg delete dependencies.express
+
+echo "--- T-03: migration with metacommand (expected 1) ---"
+printf '\\i guard.sql\n' > supabase/migrations/_t.sql
+bash scripts/check-migrations.sh; echo "got=$?"
+rm -f supabase/migrations/_t.sql
+
+echo "--- T-04: clean state (expected 0) ---"
+bash scripts/check-secrets.sh; echo "secrets=$?"
+bash scripts/check-stack.sh; echo "stack=$?"
+bash scripts/check-migrations.sh; echo "migrations=$?"
+
+
+═══════════════════════════════════════════════
+WHAT TO SHOW ME AT THE END
+═══════════════════════════════════════════════
+
+1. The output of each block (real, not summarized)
+2. The complete output of BLOCK 0.12 — it must say INTACT and EXIT=0
+3. The complete output of BLOCK 0.13 — the first 3 tests must
+   return 1, and the last 3 must return 0
+
+DO NOT seal the module. DO NOT update STATE.md. DO NOT go to Module 1.
+I seal it after reviewing.
+
+If any guard fails in BLOCK 0.12: paste the entire error and STOP.
+If any test in BLOCK 0.13 gives a result different from expected:
+the guard is broken. Tell me — I fix the guard, not you.
