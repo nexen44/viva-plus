@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "current_module": 0,
+  "modules": [
+    { "id": 0, "name": "Contract and Repository", "slug": "foundation",
+      "status": "IN_PROGRESS", "depends_on": [], "tables": [],
+      "proof": "bash scripts/verify.sh returns exit 0" },
+
+    { "id": 1, "name": "React Skeleton", "slug": "skeleton",
+      "status": "PENDING", "depends_on": [0], "tables": [],
+      "proof": "build passes; test passes; dev serves HTTP 200" },
+
+    { "id": 2, "name": "Supabase Foundation", "slug": "bedrock",
+      "status": "PENDING", "depends_on": [1],
+      "tables": [
+        { "name": "app_settings",     "exposure": "public_read", "requires_client_policy": true },
+        { "name": "feature_flags",    "exposure": "public_read", "requires_client_policy": true },
+        { "name": "admin_audit_logs", "exposure": "server_only", "requires_client_policy": false }
+      ],
+      "proof": "db push applies; 3 tables with RLS; 8 flags; anon CANNOT read audit_logs" },
+
+    { "id": 3, "name": "Real Connection", "slug": "pulse", "gate": true,
+      "status": "PENDING", "depends_on": [1, 2], "tables": [],
+      "env_vars": ["VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY"],
+      "proof": "GATE: UPDATE of a flag in the database changes the screen with no redeploy" },
+
+    { "id": 4, "name": "Authentication and Profiles", "slug": "identity",
+      "status": "PENDING", "depends_on": [3],
+      "tables": [ { "name": "profiles", "exposure": "owner_only", "requires_client_policy": true } ] },
+
+    { "id": 5, "name": "Habits", "slug": "habits",
+      "status": "PENDING", "depends_on": [4],
+      "tables": [
+        { "name": "habits",        "exposure": "owner_only", "requires_client_policy": true },
+        { "name": "habit_records", "exposure": "owner_only", "requires_client_policy": true }
+      ] },
+
+    { "id": 6,  "name": "Journeys",       "slug": "journeys",     "status": "PENDING", "depends_on": [5],
+      "tables": [
+        { "name": "journeys",       "exposure": "owner_only", "requires_client_policy": true },
+        { "name": "journey_habits", "exposure": "owner_only", "requires_client_policy": true },
+        { "name": "user_journeys",  "exposure": "owner_only", "requires_client_policy": true }
+      ] },
+    { "id": 7,  "name": "Challenges",     "slug": "challenges",   "status": "PENDING", "depends_on": [6],
+      "tables": [
+        { "name": "challenges",            "exposure": "public_read",  "requires_client_policy": true },
+        { "name": "challenge_participants","exposure": "owner_only",   "requires_client_policy": true }
+      ] },
+    { "id": 8,  "name": "Community",      "slug": "community",    "status": "PENDING", "depends_on": [5] },
+    { "id": 9,  "name": "Administration", "slug": "admin",        "status": "PENDING", "depends_on": [4] },
+    { "id": 10, "name": "Store",          "slug": "store",        "status": "PENDING", "depends_on": [4] },
+    { "id": 11, "name": "Payments",       "slug": "payments",     "status": "PENDING", "depends_on": [10] },
+    { "id": 12, "name": "Viva+ AI",       "slug": "intelligence", "status": "PENDING", "depends_on": [5, 6],
+      "note": "Requires defined purpose, privacy policy, data limits, budget" },
+    { "id": 13, "name": "PWA and Mobile", "slug": "shipping",     "status": "PENDING", "depends_on": [5] }
+  ]
+}
