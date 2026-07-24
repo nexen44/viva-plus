@@ -1,8 +1,8 @@
 # CURRENT STATE
 
 Updated: $(date -u +"%Y-%m-%d %H:%M UTC")
-Current module: 2
-Last sealed: Module 2 — Supabase Foundation
+Current module: 3
+Last sealed: Module 3 — Real Supabase Connection (Gate)
 verify.sh: INTACT / EXIT=0
 
 ## Exists today
@@ -11,7 +11,7 @@ Routes: / (HomePage), /* (NotFoundPage)
 Secrets: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
 
 ## Exact next action
-Begin Module 3 — Real Connection Gate (new session).
+Begin Module 4 — Auth & Profiles (new session).
 
 ## Blockers
 None
