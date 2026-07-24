@@ -3,7 +3,7 @@
   "current_module": 0,
   "modules": [
     { "id": 0, "name": "Contract and Repository", "slug": "foundation",
-      "status": "IN_PROGRESS", "depends_on": [], "tables": [],
+      "status": "DONE", "sealed_at": "2026-07-24T02:13Z", "depends_on": [], "tables": [],
       "proof": "bash scripts/verify.sh returns exit 0" },
 
     { "id": 1, "name": "React Skeleton", "slug": "skeleton",
