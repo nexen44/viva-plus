@@ -1,0 +1,96 @@
+~/workspace$ set -e
+echo "=== FIXING MODULE 4 TEST & VERIFYING ==="
+
+echo "--- 1. Updating App.test.tsx with MemoryRouter ---"
+cat << 'EOF' > src/App.test.tsx
+import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { describe, it, expect, vi } from 'vitest';
+import App from './App';
+
+vi.mock('./lib/supabase', () => ({
+  supabase: {
+    from: () => ({
+      select: () => ({
+        order: () => Promise.resolve({ data: [], error: null }),
+        eq: () => ({
+          maybeSingle: () => Promise.resolve({ data: null, error: null })
+        })
+      })
+    }),
+    channel: () => ({
+      on: () => ({
+        subscribe: () => ({})
+      })
+    }),
+echo "EXIT=$?"erify.shull verify script ---"')).toBeInTheDoc
+=== FIXING MODULE 4 TEST & VERIFYING ===
+--- 1. Updating App.test.tsx with MemoryRouter ---
+--- 2. Running Typecheck ---
+
+> viva-plus@0.1.0 typecheck
+> tsc --noEmit
+
+--- 3. Running Vitest ---
+
+> viva-plus@0.1.0 test
+> vitest run --run
+
+
+ RUN  v4.1.10 /home/runner/workspace
+
+
+ Test Files  2 passed (2)
+      Tests  2 passed (2)
+   Start at  15:11:10
+   Duration  1.41s (transform 189ms, setup 213ms, import 365ms, tests 91ms, environment 1.54s)
+
+--- 4. Running full verify script ---
+=== VERIFY — Viva+ ===
+deps (npm ci)           OK
+typecheck               OK
+test                    OK
+build                   OK
+secrets                 OK
+stack                   OK
+migrations              OK
+======================
+INTACT
+EXIT=0
+~/workspace$ set -e
+echo "=== SEALING MODULE 4 ==="
+
+echo "--- 1. Updating STATE.md ---"
+cat << 'EOF' > docs/STATE.md
+# CURRENT STATE
+
+Updated: $(date -u +"%Y-%m-%d %H:%M UTC")
+Current module: 4
+Last sealed: Module 4 — Auth & Profiles Isolation (RLS)
+verify.sh: INTACT / EXIT=0
+
+## Exists today
+Tables: app_settings, feature_flags (8 flags), admin_audit_logs, profiles
+Triggers: on_auth_user_created -> handle_new_user()
+Routes: / (HomePage), /* (NotFoundPage)
+Secrets: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
+
+## Exact next action
+Begin Module 5 — Habits Core in a new session.
+
+## Blockers
+None
+EOF
+
+echo "--- 2. Committing Module 4 Seal ---"
+echo "=== MODULE 4 SEALED SUCCESSFULLY ==="rofile isolation 
+=== SEALING MODULE 4 ===
+--- 1. Updating STATE.md ---
+--- 2. Committing Module 4 Seal ---
+[main 94a661d] feat(m4): authentication & profile isolation with auto-trigger [verify: INTACT]
+ 8 files changed, 314 insertions(+), 23 deletions(-)
+ create mode 100644 src/features/auth/AuthContext.tsx
+ create mode 100644 src/features/auth/AuthWidget.tsx
+ create mode 100644 supabase/migrations/20260724143519_profiles_auth.sql
+=== MODULE 4 SEALED SUCCESSFULLY ===
+~/workspace$ 
