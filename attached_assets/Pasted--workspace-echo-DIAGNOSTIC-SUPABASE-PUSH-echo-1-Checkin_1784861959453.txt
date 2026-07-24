@@ -1,0 +1,43 @@
+~/workspace$ echo "=== DIAGNOSTIC: SUPABASE PUSH ==="
+
+echo "--- 1. Checking if the migration file exists ---"
+ls -la supabase/migrations/
+
+echo "--- 2. Running db push to capture the exact error ---" 
+npx supabase db push
+echo "PUSH_EXIT_CODE=$?"
+
+echo "--- 3. Checking tables in the database ---"
+npx supabase db execute --sql "
+SELECT tablename, rowsecurity
+FROM pg_tables
+WHERE schemaname = 'public'
+  AND tablename IN ('app_settings','feature_flags','admin_audit_logs')
+ORDER BY tablename;
+"
+echo "EXECUTE_EXIT_CODE=$?"
+=== DIAGNOSTIC: SUPABASE PUSH ===
+--- 1. Checking if the migration file exists ---
+total 4
+drwxr-xr-x 1 runner runner   58 Jul 24 02:36 .
+drwxr-xr-x 1 runner runner   90 Jul 24 02:02 ..
+-rw-r--r-- 1 runner runner 1744 Jul 24 02:36 20260724023650_foundation.sql
+--- 2. Running db push to capture the exact error ---
+Cannot find project ref. Have you run supabase link?
+Try rerunning the command with --debug to troubleshoot the error.
+PUSH_EXIT_CODE=1
+--- 3. Checking tables in the database ---
+{"_tag":"Help","doc":{"description":"Manage Postgres databases.","usage":"supabase db <subcommand> [flags]","flags":[],"annotations":{"_id":"Context","services":[]},"subcommands":[{"commands":[{"name":"diff","shortDescription":"Diffs the local database for schema changes","description":"Diffs the local database for schema changes."},{"name":"dump","shortDescription":"Dumps data or schemas from the remote database","description":"Dumps data or schemas from the remote database."},{"name":"push","shortDescription":"Push new migrations to the remote database","description":"Push new migrations to the remote database."},{"name":"pull","shortDescription":"Pull schema from the remote database","description":"Pull schema from the remote database."},{"name":"reset","shortDescription":"Resets the local database to current migrations","description":"Resets the local database to current migrations."},{"name":"lint","shortDescription":"Checks local database for typing error","description":"Checks local database for typing error."},{"name":"start","shortDescription":"Starts local Postgres database","description":"Starts local Postgres database."},{"name":"query","shortDescription":"Execute a SQL query against the database","description":"Execute a SQL query against the database."},{"name":"advisors","shortDescription":"Checks database for security and performance issues","description":"Checks database for security and performance issues."},{"name":"schema","shortDescription":"Manage database schema","description":"Manage database schema."}]}],"globalFlags":[{"name":"help","aliases":["-h"],"type":"boolean","description":{"_id":"Option","_tag":"Some","value":"Show help information"},"required":false},{"name":"version","aliases":["-v"],"type":"boolean","description":{"_id":"Option","_tag":"Some","value":"Show version information"},"required":false},{"name":"completions","aliases":[],"type":"<bash|zsh|fish|sh>","description":{"_id":"Option","_tag":"Some","value":"Print shell completion script (choices: bash, zsh, fish, sh)"},"required":false},{"name":"log-level","aliases":[],"type":"<all|trace|debug|info|warn|warning|error|fatal|none>","description":{"_id":"Option","_tag":"Some","value":"Sets the minimum log level (choices: all, trace, debug, info, warn, warning, error, fatal, none)"},"required":false},{"name":"output-format","aliases":[],"type":"choice","description":{"_id":"Option","_tag":"Some","value":"Output format: text (default), json, or stream-json (NDJSON) (choices: text, json, stream-json)"},"required":false},{"name":"output","aliases":["-o"],"type":"choice","description":{"_id":"Option","_tag":"Some","value":"Output format of status variables. (choices: env, pretty, json, toml, yaml, table, csv)"},"required":false},{"name":"profile","aliases":[],"type":"string","description":{"_id":"Option","_tag":"Some","value":"Use a specific profile for connecting to Supabase API."},"required":false},{"name":"debug","aliases":[],"type":"boolean","description":{"_id":"Option","_tag":"Some","value":"Output debug logs to stderr."},"required":false},{"name":"workdir","aliases":[],"type":"string","description":{"_id":"Option","_tag":"Some","value":"Path to a Supabase project directory."},"required":false},{"name":"experimental","aliases":[],"type":"boolean","description":{"_id":"Option","_tag":"Some","value":"Enable experimental features."},"required":false},{"name":"network-id","aliases":[],"type":"string","description":{"_id":"Option","_tag":"Some","value":"Use the specified Docker network instead of a generated one."},"required":false},{"name":"yes","aliases":[],"type":"boolean","description":{"_id":"Option","_tag":"Some","value":"Answer yes to all prompts."},"required":false},{"name":"dns-resolver","aliases":[],"type":"choice","description":{"_id":"Option","_tag":"Some","value":"Look up domain names using the specified resolver. (choices: native, https)"},"required":false},{"name":"create-ticket","aliases":[],"type":"boolean","description":{"_id":"Option","_tag":"Some","value":"Create a support ticket for any CLI error."},"required":false},{"name":"agent","aliases":[],"type":"choice","description":{"_id":"Option","_tag":"Some","value":"Override agent detection: yes, no, or auto (default auto). (choices: auto, yes, no)"},"required":false}]}}
+{"_tag":"Errors","errors":[{"code":"UnknownSubcommand","message":"Unknown subcommand \"execute\" for \"supabase db\""},{"code":"UnrecognizedOption","message":"Unrecognized flag: --sql in command supabase db"}]}
+{"_tag":"Error","error":{"code":"ShowHelp","message":"Help requested"}}
+EXECUTE_EXIT_CODE=1
+~/workspace$ npx supabase db query "SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public' AND tablename IN ('app_settings','feature_flags','admin_audit_logs');"
+Connecting to local database...
+{"_tag":"Error","error":{"code":"LegacyDbConnectError","message":"failed to connect to postgres: effect/sql/SqlError: PgClient: Failed to connect"}}
+~/workspace$ npx supabase login
+{"_tag":"Error","error":{"code":"NonInteractiveError","message":"Cannot prompt for input in JSON output mode\n  Suggestion: Provide all required values via flags","detail":"Cannot prompt for input in JSON output mode","suggestion":"Provide all required values via flags"}}
+~/workspace$ npx supabase link --project-ref https://exykjtxbzkbthqrravhx.supabase.co
+{"_tag":"Error","error":{"code":"LegacyPlatformAuthRequiredError","message":"Access token not provided. Supply an access token by running `supabase login` or setting the SUPABASE_ACCESS_TOKEN environment variable."}}
+~/workspace$ npx supabase login
+{"_tag":"Error","error":{"code":"NonInteractiveError","message":"Cannot prompt for input in JSON output mode\n  Suggestion: Provide all required values via flags","detail":"Cannot prompt for input in JSON output mode","suggestion":"Provide all required values via flags"}}
+~/workspace$ 
