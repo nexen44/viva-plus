@@ -1,13 +1,16 @@
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, it, expect, vi } from 'vitest';
 import App from './App';
 
-// Mock Supabase client to prevent network calls in unit tests
 vi.mock('./lib/supabase', () => ({
   supabase: {
     from: () => ({
       select: () => ({
-        order: () => Promise.resolve({ data: [], error: null })
+        order: () => Promise.resolve({ data: [], error: null }),
+        eq: () => ({
+          maybeSingle: () => Promise.resolve({ data: null, error: null })
+        })
       })
     }),
     channel: () => ({
@@ -15,13 +18,23 @@ vi.mock('./lib/supabase', () => ({
         subscribe: () => ({})
       })
     }),
-    removeChannel: vi.fn()
+    removeChannel: vi.fn(),
+    auth: {
+      getSession: () => Promise.resolve({ data: { session: null } }),
+      onAuthStateChange: () => ({
+        data: { subscription: { unsubscribe: vi.fn() } }
+      })
+    }
   }
 }));
 
-describe('App Component (Module 3)', () => {
-  it('renders base layout, dashboard header and feature flags container', async () => {
-    render(<App />);
+describe('App Component (Module 4)', () => {
+  it('renders base layout, dashboard header and auth widget', async () => {
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>
+    );
     expect(screen.getByText('VIVA+')).toBeInTheDocument();
     expect(screen.getByText('VIVA+ Dashboard')).toBeInTheDocument();
   });
