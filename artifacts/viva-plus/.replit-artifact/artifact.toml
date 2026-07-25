@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Viva+"
+version = "1.0.0"
+id = "artifacts/viva-plus"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21922
+
+[services.env]
+PORT = "21922"
+BASE_PATH = "/"
+
+[services.development]
+run = "cd /home/runner/workspace && npm run dev"
+
+[services.production]
+build = [ "npm", "run", "build" ]
+serve = "static"
+publicDir = "dist"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"

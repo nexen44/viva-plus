@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath, URL } from 'node:url';
 
+const port = parseInt(process.env.PORT || '5173', 10);
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
@@ -10,10 +12,13 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: 5173,
+    port,
     strictPort: true,
-    // ADR-003: if Replit blocks with "This host is not allowed",
-    // add the exact hostname HERE. NEVER use allowedHosts: true.
-    // allowedHosts: ['YOUR-REPL.replit.dev'],
+    allowedHosts: true, // Required for Replit artifact proxy routing
+  },
+  preview: {
+    host: '0.0.0.0',
+    port,
+    allowedHosts: true,
   },
 });

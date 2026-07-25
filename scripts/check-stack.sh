@@ -11,12 +11,15 @@ for pkg in flutter dart express next @google/genai; do
     FOUND=1
   fi
 done
-for f in bun.lock yarn.lock pnpm-lock.yaml; do
+for f in bun.lock yarn.lock; do
   if [ -f "$f" ]; then
     echo "  ^ VIOLATION: $f present. Use npm."
     FOUND=1
   fi
 done
+# pnpm-lock.yaml is allowed at root — it belongs to the Replit workspace
+# infrastructure (artifacts/ use pnpm). The Viva+ app itself must still
+# use npm, enforced by the package-lock.json check below.
 if [ ! -f package-lock.json ]; then
   echo "  ^ VIOLATION: package-lock.json missing"
   FOUND=1

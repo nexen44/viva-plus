@@ -1,0 +1,7 @@
+name = "viva-plus"
+run = ["sh", "-c", "npm run build && npm run start"]
+build = ["npm", "run", "build"]
+
+[deployment]
+build = ["npm", "run", "build"]
+run = ["npm", "run", "start"]
