@@ -9,23 +9,22 @@ vi.mock('./lib/supabase', () => ({
       select: () => ({
         order: () => Promise.resolve({ data: [], error: null }),
         eq: () => ({
-          maybeSingle: () => Promise.resolve({ data: null, error: null })
-        })
-      })
+          maybeSingle: () => Promise.resolve({ data: null, error: null }),
+        }),
+      }),
     }),
     channel: () => ({
-      on: () => ({
-        subscribe: () => ({})
-      })
+      on: () => ({ subscribe: () => ({}) }),
     }),
     removeChannel: vi.fn(),
     auth: {
-      getSession: () => Promise.resolve({ data: { session: null } }),
+      getSession: () =>
+        Promise.resolve({ data: { session: null }, error: null }),
       onAuthStateChange: () => ({
-        data: { subscription: { unsubscribe: vi.fn() } }
-      })
-    }
-  }
+        data: { subscription: { unsubscribe: vi.fn() } },
+      }),
+    },
+  },
 }));
 
 describe('App Component (Module 4)', () => {
@@ -35,7 +34,9 @@ describe('App Component (Module 4)', () => {
         <App />
       </MemoryRouter>
     );
-    expect(screen.getByText('VIVA+')).toBeInTheDocument();
+
+    // findByText aguarda a resolução assíncrona do getSession antes de checar
+    expect(await screen.findByText('VIVA+')).toBeInTheDocument();
     expect(screen.getByText('VIVA+ Dashboard')).toBeInTheDocument();
   });
 });
